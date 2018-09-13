@@ -7,8 +7,21 @@
             </div>
         </div>
     </header>
+
 {% endblock %}
 {% block body %}
+<style type="text/css">
+
+	/* 焦点图 */
+	.slideBox{ position:relative; overflow:hidden; margin:10px auto;  /* 设置焦点图最大宽度 */ }
+	.slideBox .hd{ position:absolute ; height:28px; line-height:28px; bottom:0; margin-left:40%; z-index:1; }
+	.slideBox .hd li{ display:inline-block; width:9px; height:13px; -webkit-border-radius:10px; -moz-border-radius:10px; border-radius:10px; background:#333; text-indent:-9999px; overflow:hidden; margin:0 6px;   }
+	.slideBox .hd li.on{ background:#fff;  }
+	.slideBox .bd{ position:relative; z-index:0; }
+	.slideBox .bd li{ position:relative; text-align:center;  }
+
+</style>
+
     <div id="pageContent" class="container-fluid">
         <!--Null:0, Created:1, Published:2, Contracting:3, PayDeposit:4, Reviewing:5, PayAll:6, Retainage:7, Last:8 -->
         {% if req.Status == 8 %}<!-- last-->
@@ -30,29 +43,34 @@
                     <span style="font-size: 34px;color: #ff9000"><strong>项目交付</strong></span>
                 </div>
                 <div class="panel-body">
-                    <div class="col-xs-12">
-                        {% for i in videoAttachment %}
-                        <div class="col-xs-3">
-                            <div class="cloud_object_image attachment_object"
-                                 value="{{i.Id}}"
-                                {% if i.Object.Type == 0 or i.Object.Type == 1 %}
-                                    style="background-image:url('{{i.Object.File.Path}}')"
-                                {% else %}
-                                    style="background-image:url('image/text.png');"
-                                {% endif %}>
-                            </div>
-                            <p style="text-align: center;font-size: 28px">
-                                <a value="{{i.Id}}" style="margin-right: 2px;">下载</a>
-                                <a value="{{i.Id}}">保存</a>
-                            </p>
+                    {% if  checkAttachment[0].Status!=2 %}
+                    <div class="container-fluid screen">
+                        <div id ="video_check_container" class="container-fluid" style="margin:15px 0px 15px 0px;">
+                            <div id="video_check_player" style="margin:0 auto;"></div>
+                            <input id="video_check_path" value="{{ checkAttachment[0].Object.File.VideoFile }}" hidden>
+                            <input id="video_check_attachID" value="{{ checkAttachment[0].Id }}" hidden>
                         </div>
-                        {% endfor %}
+
                     </div>
+                    {% if  not IsService %}
+                    <p style="text-align: center;font-size: 28px">
+                        <small class="saveAttachment attObj173" value="{{checkAttachment[0].Id }}">保存到媒体库</small>
+                        <!--<a href='/session#/requirement/{{req.Id }}'value="{{checkAttachment[0].Id }}" style="margin-right: 2px;">保存</a>-->
+                        <!--<a value="{{checkAttachment[0].Id }}">保存</a>-->
+                    </p>
+                      {%endif%}
+                    {%endif%}
                 </div>
+
                 {% if req.Status == 7 %}
-                <div class="panel-footer" style="overflow-y: auto">
-                    <button style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">确认项目完成</button>
+                <div class="panel-footer" style="text-align:center;overflow-y: auto">
+                {% if IsService %}
+                    <strong>请等待用户下载视频并确认</strong>
+                {% else %}
+                    <button id="ContractOver-btn" style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">确认项目完成</button>
+                {% endif %}
                 </div>
+
                 {% endif %}
             </div>
         {% endif %}
@@ -96,8 +114,18 @@
                     {% endif %}
                 </div>
                 {% if req.Status == 6 %}
-                <div class="panel-footer" style="overflow-y: auto;">
-                    <button style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">通知平台已支付</button>
+
+                <div class="panel-footer" style="text-align:center;overflow-y: auto;">
+                    {% if IsService %}
+                        <button id="server-comfirm-btn" style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">确认收到尾款</button>
+                    {%else%}
+                        {% if req.IsFinalPay == 0 %}
+                         <button id="comfirm-pay-btn" style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">通知平台已支付</button>
+                        {%else%}
+                        <strong>请等待平台确认</strong>
+
+                        {%endif%}
+                    {%endif%}
                 </div>
                 {% endif %}
             </div>
@@ -109,7 +137,11 @@
                     <span style="font-size: 34px;color: #ff9000"><strong>审片窗口</strong></span>
                 </div>
                 <div class="panel-body">
+
                     {% if checkAttachment | length() != 0 %}
+                     <!--有视频没被驳回-->
+
+                    {% if  checkAttachment[0].Status!=2%}
                     <div class="container-fluid screen">
                         <div id ="video_check_container" class="container-fluid" style="margin:15px 0px 15px 0px;">
                             <div id="video_check_player" style="margin:0 auto;"></div>
@@ -117,16 +149,80 @@
                             <input id="video_check_attachID" value="{{ checkAttachment[0].Id }}" hidden>
                         </div>
                     </div>
+                    {%else%}
+                        {% if IsService %}
+                                 <div class="container-fluid" style="padding:20px;text-align: center;">
+                                   <a  href='/session#/requirement/{{req.Id }}'>视频已被驳回，请上传新视频</a>
+                                    </div>
+                        {% else %}
+                              <div class="container-fluid" style="padding:20px;text-align: center;">
+                                   <strong>视频已被驳回，请等待平台上传新视频</strong>
+                                                </div>
+                        {% endif %}
+                    {%endif%}
                     {% else %}
                     <div class="container-fluid" style="padding:20px;text-align: center;">
+                        {% if IsService %}
+                        <a href='/session#/requirement/{{req.Id }}'>暂无可审视频，请登陆网站进行上传</a>
+                        {% else %}
                         <span>暂无可审视频</span>
+                          {% endif %}
                     </div>
                     {% endif %}
                 </div>
-                {% if req.Status == 5 and checkAttachment | length() != 0 %}
+                <!--有片，并且有没被驳回的片-->
+                {% if req.Status == 5 and checkAttachment | length() != 0 and checkAttachment[0].Status!=2%}
                 <div class="panel-footer" style="overflow-y: auto;">
-                    <button style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">通过</button>
-                    <button style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">再修改</button>
+                      {% if IsService %}
+                    <!--<span style="font-size: 34px"><strong>等待客户审片</strong></span>-->
+                    <h4 style="text-align:center; font-size: 34px;line-height:50px;margin: 0">
+                        <span  class="glyphicon glyphicon-pushpin"></span> 评论列表
+                    </h4>
+                     <ul >
+                    {% for value in  MarkPoints %}
+                     <p>{{ value.Content }}</p>
+                    {%endfor%}
+                     </ul>
+
+                        {% else %}
+
+                    <h4 style="line-height:50px;margin: 0">
+                    <span class="glyphicon glyphicon-pushpin"></span> 评论列表
+                </h4>
+
+                <div class="input-group addMarkPoint_group">
+                    <input  name="contract_type" class="{{ 'markPoint_input_'}} form-control" placeholder="请添加评论描述">
+                    <span class="input-group-btn">
+                        <button class="addMarkPoint btn btn-default" title="添加评论描述" value="{{ segment }}">
+                            <span id='addMark' class="glyphicon glyphicon-plus"></span>
+                        </button>
+                    </span>
+                </div>
+                <table class="table  table-hover  {{ 'check_markPointTable_' }}">
+                    <thead>
+                        <tr>
+                            <th class="col-xs-7">评论内容</th>
+                            <th class="col-xs-2">删除</th>
+                        </tr>
+                    </thead>
+                    <tbody class="{{ 'markPoints_' }} text-left">
+                    {% for value in  MarkPoints %}
+    <tr class="markpointItem">
+        <td>{{ value.Content }}</td>
+        {% if IsService %}
+        <td><a title="删除" class="linkCursor"><span class="glyphicon glyphicon-trash"style="cursor:not-allowed"></span></a></td>
+        {% else %}
+
+        <td><a href="javascript:delMarkPoint({{ value.Id }})" title="删除" class="linkCursor delMarkPoint" value="{{ value.Id }}"><red><span  id='delMark' class="glyphicon glyphicon-trash"></span></red></a></td>
+        {% endif %}
+    </tr>
+{% endfor %}
+                    </tbody>
+                </table>
+
+                    <button id='pass-video-btn' style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">通过并支付尾款</button>
+                    <button id='reject-video-btn'style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">再修改</button>                          {% endif %}
+
                 </div>
                 {% endif %}
             </div>
@@ -171,9 +267,21 @@
                 {% endif %}
                 </div>
                 {% if req.Status == 4 %}
-                <div class="panel-footer" style="overflow-y: auto;">
-                    <button style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">通知平台已支付</button>
+                <div class="panel-footer" style="text-align:center;overflow-y: auto;">
+                    {% if IsService %}
+
+                        <button id="server-comfirm-btn1" style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">确认收到预付款</button>
+                    {% else %}
+                        {% if req.IsAdvancePay==0 %}
+                        <button id="comfirm-beforepay-btn" style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">通知平台已支付</button>
+                        {% else %}
+                        <strong>请等待平台确认</strong>
+                        {% endif %}
+
+                    {% endif %}
+
                 </div>
+
                 {% endif %}
             </div>
         {% endif %}
@@ -182,69 +290,128 @@
             <div class="panel panel-default" style="padding:10px;margin-top: 20px">
                 <div class="panel-heading">
                     <span style="font-size: 34px;color: #ff9000"><strong>方案信息</strong></span>
-                    <span style="font-size: 28px;color: #ff9000;margin:10px 10px;float: right;">{% if req.Status == 3 %}沟通中{% else %}已通过{% endif %}</span>
+                    <span style="font-size: 28px;color: #ff9000;margin:10px 10px;float: right;">
+                        {% if req.Status == 3 %}
+                        沟通中{% else %}已通过{% endif %}
+                    </span>
                 </div>
-                <div class="panel-body">
+                <div class="panel-body" >
                     {% if follower | length() == 0 %}
-                    <h3 class="req-title" style="text-align:center;">已接洽，请等待方案</h3>
+                    <h3 class="req-title" style="text-align:center;">
+                        {% if IsService %}
+                         <a href="/session#/requirement/{{req.Id }}">已接洽，请登陆网站添加方案</a>
+                         {% else %}
+                        已接洽，请等待新方案
+                         {% endif %}
+                    </h3>
                     {% else %}
-                    <div class="row contract-detail-item">
-                        <div class="col-xs-3" style="font-size: 32px;">画面类型：</div>
-                        <div class="col-xs-9" style="font-size: 32px;">{{ follower[0].Format}}</div>
+                    <div id="slideBox" class="slideBox">
+                          <div class="hd" style="padding:20px">
+                                <ul></ul>
+                            </div>
+                            <div class="bd" >
+                                <ul>
+                                        {% for f in follower %}
+                                        <li>
+
+                                        <div class="panel-body"  >
+                                        <div class="row contract-detail-item">
+                                            <div class="col-xs-3" style="font-size: 32px;">画面类型：</div>
+                                            <div class="col-xs-9" style="font-size: 32px;">{{ f.Format}}</div>
+                                        </div>
+                                        <div class="row contract-detail-item">
+                                            <div class="col-xs-3" style="font-size: 32px;">基本方案：</div>
+                                            <div class="col-xs-9" style="font-size: 32px;min-height: 100px;">{{ f.Script}}</div>
+                                        </div>
+                                        <div class="row contract-detail-item">
+                                            <div class="col-xs-3" style="font-size: 32px;">时间长度：</div>
+                                            <div class="col-xs-9" style="font-size: 32px;">{{ f.Long}}</div>
+                                        </div>
+                                        <div class="row contract-detail-item">
+                                            <div class="col-xs-3" style="font-size: 32px;">
+                                                项目报价
+                                                <span class="glyphicon glyphicon-triangle-bottom" style="cursor:pointer" onclick="$('#price_detail_items{{f.Id}}').slideToggle();"></span>
+                                            </div>
+                                            <div class="col-xs-9" style="font-size: 32px;">{{ f.Amount}}元</div>
+                                        </div>
+                                        <div class="container-fluid" id="price_detail_items{{f.Id}}" hidden>
+                                            <div class="row contract-detail-item">
+                                                <div class="col-xs-3" style="font-size: 32px;">基础价格：</div>
+                                                <div class="col-xs-9" style="font-size: 32px;">{{ f.BasePrice}}元</div>
+                                            </div>
+                                            <div class="row contract-detail-item">
+                                                <div class="col-xs-3" style="font-size: 32px;">内容策划：</div>
+                                                <div class="col-xs-9" style="font-size: 32px;">{{ f.SchemePrice}}元</div>
+                                            </div>
+                                            <div class="row contract-detail-item">
+                                                <div class="col-xs-3" style="font-size: 32px;">拍摄服务：</div>
+                                                <div class="col-xs-9" style="font-size: 32px;">{{ f.ShotPrice}}元</div>
+                                            </div>
+                                            <div class="row contract-detail-item">
+                                                <div class="col-xs-3" style="font-size: 32px;">演员模特：</div>
+                                                <div class="col-xs-9" style="font-size: 32px;">{{ f.ActorPrice}}元</div>
+                                            </div>
+                                            <div class="row contract-detail-item">
+                                                <div class="col-xs-3" style="font-size: 32px;">配音配乐：</div>
+                                                <div class="col-xs-9" style="font-size: 32px;">{{ f.MusicPrice}}元</div>
+                                            </div>
+                                            <div class="row contract-detail-item">
+                                                <div class="col-xs-3" style="font-size: 32px;">后期制作：</div>
+                                                <div class="col-xs-9" style="font-size: 32px;">{{ f.AEPrice}}元</div>
+                                            </div>
+                                        </div>
+                                        <div class="row contract-detail-item" >
+                                            <div class="col-xs-3" style="font-size: 32px;">押金比例：</div>
+                                            <div class="col-xs-9" style="font-size: 32px;">{{ f.DepositPercent }}%</div>
+                                        </div >
+
+                                            {% if f.IsDeny %}
+                                            <div style="margin-top:3%;margin-bottom:12%">
+                                              <strong style="font-size: 28px;padding: 10px 30px 10px 30px;background-color:  	#FF0000;color: #FFFFFF;float:right;">已驳回</strong>
+                                                 <!--<strong style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: 	#00FF00;color: #FFFFFF;float:right;">已通过-->
+                                                 <!--</strong>-->
+                                                </div>
+                                            {%else%}
+                                                        {% if req.Status > 3 %}<!--contracting-->
+                                                        <div style="margin-top:3%;margin-bottom:12%">
+                                                            <strong style="font-size: 28px;padding: 10px 30px 10px 30px;background-color:#00FF00;color: #FFFFFF;float:right;">已通过</strong>
+                                                        </div>
+                                                        {% endif %}
+                                                        {% if req.Status == 3 and  not IsService %}
+                                                            <div style="margin-top:3%;margin-bottom:12%">
+                                                            <input id="follower_producer_id" value="{{ f.FollowerProducerId }}" hidden>
+                                                            <input id="follower_id" value="{{ f.Id }}" hidden>
+                                                            <button id='acceptReqProducer' onclick="javascript:acceptReqProducer(this);" style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">同意，并支付预付款</button>
+                                                            <button id='denyReqProducer' onclick="javascript:denyReqProducer(this);" style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">再修改</button>
+                                                        </div>
+
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                         </li>
+                                        {% endfor %}
+                                </ul>
+                            </div>
+
                     </div>
-                    <div class="row contract-detail-item">
-                        <div class="col-xs-3" style="font-size: 32px;">基本方案：</div>
-                        <div class="col-xs-9" style="font-size: 32px;min-height: 100px;">{{ follower[0].Scheme}}</div>
-                    </div>
-                    <div class="row contract-detail-item">
-                        <div class="col-xs-3" style="font-size: 32px;">时间长度：</div>
-                        <div class="col-xs-9" style="font-size: 32px;">{{ follower[0].Long}}</div>
-                    </div>
-                    <div class="row contract-detail-item">
-                        <div class="col-xs-3" style="font-size: 32px;">
-                            项目报价
-                            <span class="glyphicon glyphicon-triangle-bottom" style="cursor:pointer" onclick="$('#price_detail_items').slideToggle();"></span>
-                        </div>
-                        <div class="col-xs-9" style="font-size: 32px;">{{ follower[0].Amount}}元</div>
-                    </div>
-                    <div class="container-fluid" id="price_detail_items" hidden>
-                        <div class="row contract-detail-item">
-                            <div class="col-xs-3" style="font-size: 32px;">基础价格：</div>
-                            <div class="col-xs-9" style="font-size: 32px;">{{ follower[0].BasePrice}}元</div>
-                        </div>
-                        <div class="row contract-detail-item">
-                            <div class="col-xs-3" style="font-size: 32px;">内容策划：</div>
-                            <div class="col-xs-9" style="font-size: 32px;">{{ follower[0].SchemePrice}}元</div>
-                        </div>
-                        <div class="row contract-detail-item">
-                            <div class="col-xs-3" style="font-size: 32px;">拍摄服务：</div>
-                            <div class="col-xs-9" style="font-size: 32px;">{{ follower[0].ShotPrice}}元</div>
-                        </div>
-                        <div class="row contract-detail-item">
-                            <div class="col-xs-3" style="font-size: 32px;">演员模特：</div>
-                            <div class="col-xs-9" style="font-size: 32px;">{{ follower[0].ActorPrice}}元</div>
-                        </div>
-                        <div class="row contract-detail-item">
-                            <div class="col-xs-3" style="font-size: 32px;">配音配乐：</div>
-                            <div class="col-xs-9" style="font-size: 32px;">{{ follower[0].MusicPrice}}元</div>
-                        </div>
-                        <div class="row contract-detail-item">
-                            <div class="col-xs-3" style="font-size: 32px;">后期制作：</div>
-                            <div class="col-xs-9" style="font-size: 32px;">{{ follower[0].AEPrice}}元</div>
-                        </div>
-                    </div>
-                    <div class="row contract-detail-item">
-                        <div class="col-xs-3" style="font-size: 32px;">押金比例：</div>
-                        <div class="col-xs-9" style="font-size: 32px;">{{ follower[0].DepositPercent }}%</div>
-                    </div>
+                    <script src="/static/mobile/TouchSlide.1.1.js"></script>
+                    {%if  follower | length() > 1%}
+                    <script type="text/javascript">
+                            TouchSlide({
+                                slideCell:"#slideBox",
+                                titCell:".hd ul", //开启自动分页 autoPage:true ，此时设置 titCell 为导航元素包裹层
+                                mainCell:".bd ul",
+                                effect:"leftLoop",
+                                autoPage:true,//自动分页
+
+                            });
+                        </script>
+                    {%endif%}
+
                     {% endif %}
-                </div>
-                {% if req.Status == 3 and follower | length() > 0 %}
-                <div class="panel-footer" style="overflow-y: auto;">
-                    <button style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">同意，并支付预付款</button>
-                    <button style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">再修改</button>
-                </div>
-                {% endif %}
+
+ </div>
+
             </div>
         {% endif %}
 
@@ -252,7 +419,13 @@
             <div class="panel panel-default" style="padding:10px;margin-top: 20px">
                 <div class="panel-heading">
                     <span style="font-size: 34px;color: #ff9000"><strong>需求信息</strong></span>
-                    <span style="font-size: 28px;color: #ff9000;margin:10px 10px;float: right;">{% if req.Status == 1 %}草稿{% else %}已提交{% endif %}</span>
+                    <span style="font-size: 28px;color: #ff9000;margin:10px 10px;float: right;">{% if req.Status == 1 %}草稿{% else %}
+                        {% if IsService and req.Status <= 2%}
+                        未申请
+                     {% else %}
+                        已提交
+                    {% endif %}
+                        {% endif %}</span>
                 </div>
                 <div class="panel-body">
                     <div class="row contract-detail-item">
@@ -278,26 +451,55 @@
                         </div>
                     </div>
                     <input id="request_id" value="{{ req.Id }}" hidden>
+                    <!--很多个方案 但是都是取第一个-->
+
+
+                     {% if checkAttachment %}
+                        <input id="checkAttachment_id" value="{{ checkAttachment[0].Id }}" hidden>
+                    {% endif  %}
+
                     <input id="contract_id" value="{{ req.ContractId }}" hidden>
                 </div>
                 {% if req.Status == 1 %}
                 <div class="panel-footer" style="overflow-y: auto">
-                    <button style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">提交</button>
-                    <button style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">编辑</button>
+                    <!--<button id = 'comfirm-publish-btn'style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">提交</button>-->
+                    <button id='edit-publish-btn' style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">编辑</button>
                 </div>
                 {% elif req.Status == 2 %}
-                <div class="panel-footer" style="overflow-y: auto">
-                    <button style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">取消提交</button>
-                </div>
+                     {% if IsService %}
+                        <div class="panel-footer" style="overflow-y: auto">
+                            <button id='ask-requirement-btn' style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">即刻申请</button>
+                        </div>
+                     {% else %}
+                        <div class="panel-footer"  id='cancel-publish-btn' style="overflow-y: auto">
+                                    <button style="font-size: 28px;padding: 10px 30px 10px 30px;background-color: #f68e14;color: #FFFFFF;float:right;">取消提交</button>
+                                </div>
+                    {% endif %}
                 {% endif %}
             </div>
         {% endif %}
         <div class="container-fluid" style="height: 100px"></div><!--用于垫底-->
     </div>
+
+  <!--<script src="http://www.jq22.com/jquery/1.11.1/jquery.min.js"></script>-->
+    <!--<script src="/static/mobile/hammer.min.js"></script>-->
+    <!--<script src="/static/mobile/hammer.jquery.min.js"></script>-->
+    <!--<link href="/static/mobile/main.css" rel="stylesheet"/>-->
+    <!--<script src="/static/mobile/itemslide.min.js"></script>-->
+    <!--<script type="text/javascript">-->
+	<!--$("#slide").initslide(-->
+        <!--{-->
+        <!--}-->
+    <!--);-->
+    <!--</script>-->
     <script src="//cdn.bootcss.com/jquery/1.11.2/jquery.min.js"></script>
     <script src="/static/script/template/template.js"></script>
+    <script type="text/javascript" src="/static/mobile/require/require.min.js"></script>
     <script src="/static/mobile/mreqdetail.js"></script>
     <script src="/static/script/player/ckplayer/ckplayer.js"></script>
+    <script type="text/javascript" >
+
+    </script>
     <script type="text/javascript">
         function checkBroweser(){
             var sUserAgent = navigator.userAgent.toLowerCase();
@@ -323,7 +525,9 @@
             var bIsIpad = sUserAgent.match(/ipad/i) == "ipad";
             var bIsIphoneOs = sUserAgent.match(/iphone os/i) == "iphone os";
             if (bIsIpad || bIsIphoneOs)
-                var videoFilePath = $('#video_check_path').val().replace('123.57.157.64:8080','123.57.157.64:800');
+                var videoFilePath = $('#video_check_path').val()
+                <!--原始的被修改的-->
+                <!--var videoFilePath = $('#video_check_path').val().replace('123.57.157.64:8080','123.57.157.64:800');-->
             else
                 var videoFilePath=$('#video_check_path').val();
             var flashvars=null ;
@@ -355,4 +559,14 @@
             CKobject.embedSWF('/static/script/player/ckplayer/ckplayer.swf','video_check_player','ckplayer_a1',iWidth,iHeight,flashvars,params);
         }
     </script>
+    <script src="/static/mobile/requirement.js"></script>
+
+    <script src="/static/mobile/mycontract.js"></script>
+
+
 {% endblock %}
+
+
+
+
+

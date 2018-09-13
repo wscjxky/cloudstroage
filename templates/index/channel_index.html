@@ -1,4 +1,5 @@
-{% if videos and videos | length() == 4 %}
+{% if videos and videos | length() != 4 %}
+<h1></h1>
     {% if iOrder % 2 == 1 %} <!--最大的放左边-->
         {% for i in videos %}
             {% if loop.index == 1 %}

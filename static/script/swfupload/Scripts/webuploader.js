@@ -4880,7 +4880,6 @@
                     arr, i, len, mouseHandler;
     
                 input.attr( 'type', 'file' );
-                input.attr( 'style', 'display:none' );
                 input.attr( 'name', opts.name );
                 input.addClass('webuploader-element-invisible');
     

@@ -252,13 +252,13 @@ function InitSwfuploadComponent(ucb,cache_,WebUploader)
             chunked: false,
             chunkSize: 512 * 1024,
             server:g_upload_data.uploadurl+ '?action=save&md5=111',
-            runtimeOrder: 'html5,flash',
+            runtimeOrder: 'flash,html5',
             auto:'true',
             disableGlobalDnd: true,
             duplicate:false,
             fileNumLimit: 300,
-            fileSizeLimit: 21474836480,    // 2g
-            fileSingleSizeLimit: 2147483648   // 2g
+            fileSizeLimit: 1000 * 1024 * 1024,    // 200 M
+            fileSingleSizeLimit: 1000* 1024 * 1024   , // 50 M
         });
         ///上传进度
         uploader.on('uploadProgress',function(file,progress){
@@ -306,7 +306,7 @@ function InitSwfuploadComponent(ucb,cache_,WebUploader)
                var me = this, owner = this.owner, deferred = WebUploader.Deferred();
                // 查看用户空间是否足够
                console.log(file.size);
-               if (file.size>= 2147483648){
+               if (file.size>=1573741824){
                     alertState("文件大小超过限制",failed);
                     return;
                }
@@ -318,8 +318,6 @@ function InitSwfuploadComponent(ucb,cache_,WebUploader)
                     data: JSON.stringify({fileSize: file.size}),
                     success: function (data) {
                         if (!isResponseDataAvailable(data)) {
-                                                                console.log("查用户空间容量失");
-
                             alertState("检查用户空间容量失败.问题描述: " + data.errorMsg, "failed");
                             return;
                         }
@@ -334,7 +332,6 @@ function InitSwfuploadComponent(ucb,cache_,WebUploader)
                            console.debug(file.source.name);
                            owner.md5File( file.source ).then(function( md5 ) {
                                console.debug('----finish md5 cal----');
-                               console.debug(md5);
                            ///结束继续往下走
                            //设置md5参数
                                 me.options.server=g_upload_data.uploadurl+ '?action=save&md5='+md5;
@@ -343,14 +340,12 @@ function InitSwfuploadComponent(ucb,cache_,WebUploader)
                                 if(typeof(g_upload_data[md5])=="undefined")
                                 {
                                     g_upload_data[md5]=true;
-
                                     $.ajax({
                                         type: "get",
                                         url: me.options.server,
                                         async:true,
                                         success:function(msg){
                                             //response obj
-
                                             if (msg){
                                                 var obj=eval('('+msg+')');
                                                 //文件重复
@@ -365,14 +360,10 @@ function InitSwfuploadComponent(ucb,cache_,WebUploader)
                                                         uploader.reset();
                                                 }
                                             }
-                                            else {
-                                                console.debug(msg);
-                                            }
                                         }
                                     });
                                 }
                                 //等待事件完成
-                                console.debug("resolve");
                                 deferred.resolve();
                            });
                         }

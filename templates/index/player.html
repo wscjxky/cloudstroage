@@ -76,18 +76,6 @@
             <p class="player-intro">作品简介：{{ object.Description }}</p>
         </div>
         <div class="col-xs-5 text-center">
-            <!--<h4 style="margin:0">
-                参考价：
-                {% if  zone_item.ReferPrice!=0 and zone_item.ReferPrice!=None%}
-                <red>
-                    <span class="glyphicon glyphicon-yen"></span>
-                        <h3 style="display:inline-block;margin: 0">{{ zone_item.ReferPrice|int() }}</h3>
-                </red>
-                {% else %}
-                <span class="glyphicon glyphicon-yen"></span>--
-                {% endif %}
-                <input id="ReferPrice" value="{{ zone_item.ReferPrice }}" hidden>
-            </h4>-->
             <div class="row text-center" style="">
                 <!--<div class="col-xs-12">
                     <h4>分项价格
@@ -107,13 +95,7 @@
                             <td><small>拍摄服务</small><br> {% if zone_item.ShotPrice  %}
                                 <strong>{{ zone_item.ShotPrice|int() }}元</strong>{% else %}--{% endif %}</td>
                         </tr>
-                        <tr>
-                            <td style="vertical-align: middle; background-color: #ddd"> {% if zone_item.ReferPrice  %}
-                                <strong>{{ zone_item.ReferPrice|int() }}元</strong>{% else %}--{% endif %}</td>
-                            <td><small>演员模特</small><br> {% if zone_item.ActorPrice  %}{{ zone_item.ActorPrice|int() }}元{% else %}--{% endif %}</td>
-                            <td><small>配音配乐</small><br> {% if zone_item.MusicPrice  %}{{ zone_item.MusicPrice|int() }}元{% else %}--{% endif %}</td>
-                            <td><small>后期制作</small><br> {% if zone_item.AEPrice  %}{{ zone_item.AEPrice|int() }}元{% else %}--{% endif %}</td>
-                        </tr>
+
                     </table>
                 </div>
             </div>
@@ -161,18 +143,7 @@
             <h4 style="display:inline-block;margin: 0">同类型推荐</h4>
             <a style="float:right" href="/channel/{{ object.Category_2 }}">更多</a>
             <hr>
-            {% for i in more%}
-            <div class="player-more">
-                <div class="pic">
-                    <img src="{{ i.Portrait }}">
-                </div>
-                <div class="intro">
-                    <p><a href="/player/{{ i.ObjectId }}"><strong>{{ i.Object.Name }}</strong></a></p>
-{#                    <p>{{ i.Intro }}</p>#}
-                    <p>来自：<a href="/zone/{{ i.DomainId }}" target="_blank">{{ i.Domain.CompanyName }}</a></p>
-                </div>
-            </div>
-            {% endfor %}
+
             </div>
         </div>
     </div>

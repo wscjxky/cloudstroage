@@ -36,12 +36,12 @@
     <tr style="border-bottom:solid 2px #000">
         <td  style="padding: 0" ><h6>星级</h6><h6>{{ value.Domain.StartLevel }}</h6></td>
         <td>
-            {{value.Domain.UsedSize}}/{{value.Domain.StorageSize }}
-            <h6>已使用<red><strong>{{value.Domain.UsedSize/value.Domain.StorageSize*100}}%</strong></red></h6>
+            {{value.Domain.UsedSize}}/{{value.Domain.DefaultStorageSize + value.Domain.ExtendStorageSize }}
+            <h6>已使用<red><strong>{{value.Domain.UsedSize/(value.Domain.DefaultStorageSize + value.Domain.ExtendStorageSize)*100}}%</strong></red></h6>
         </td>
         <td>
             <div class="progress" style="width:200px;">
-                <div class="progress-bar" role="progressbar" aria-valuenow="{{value.Domain.UsedSize/value.Domain.StorageSize*100}}" aria-valuemin="0" aria-valuemax="100" style="width:{{value.Domain.UsedSize/value.Domain.StorageSize*100}}%;">
+                <div class="progress-bar" role="progressbar" aria-valuenow="{{value.Domain.UsedSize/(value.Domain.DefaultStorageSize + value.Domain.ExtendStorageSize)*100}}" aria-valuemin="0" aria-valuemax="100" style="width:{{value.Domain.UsedSize/(value.Domain.DefaultStorageSize + value.Domain.ExtendStorageSize)*100}}%;">
                 </div>
             </div>
         </td>
